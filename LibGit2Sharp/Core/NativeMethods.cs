@@ -1009,7 +1009,27 @@ namespace LibGit2Sharp.Core
         internal static extern unsafe UIntPtr git_packbuilder_written(git_packbuilder* packbuilder);
 
         [DllImport(libgit2)]
-        private static extern unsafe int git_reference_create(
+        internal static extern unsafe int git_refdb_set_backend(git_refdb* refdb, IntPtr backend);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe int git_refdb_open(out git_refdb* refdb, git_repository* repo);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe void git_refdb_free(git_refdb* refdb);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe IntPtr git_reference__alloc(
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof (StrictUtf8Marshaler))] string name,
+            IntPtr oid,
+            IntPtr peel);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe IntPtr git_reference__alloc_symbolic(
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrictUtf8Marshaler))] string name,
+            [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(StrictUtf8Marshaler))] string target);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe int git_reference_create(
             out git_reference* reference,
             git_repository* repo,
             [CustomMarshaler(typeof(StrictUtf8Marshaler), typeof(string))] byte* name,
@@ -1412,6 +1432,9 @@ namespace LibGit2Sharp.Core
         [DllImport(libgit2, EntryPoint = "git_repository_path")]
         [return: CustomMarshaler(typeof(LaxFilePathNoCleanupMarshaler), typeof(FilePath))]
         private static extern unsafe byte* git_repository_path_(git_repository* repository);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe int git_repository_refdb(out git_refdb* refdb, git_repository* repo);
 
         [DllImport(libgit2)]
         internal static extern unsafe void git_repository_set_config(

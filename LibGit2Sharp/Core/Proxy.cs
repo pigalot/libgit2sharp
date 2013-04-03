@@ -1865,6 +1865,15 @@ namespace LibGit2Sharp.Core
 
 #endregion
 
+#region git_refdb_
+
+        public static unsafe void git_refdb_set_backend(RefDatabaseHandle refdb, IntPtr backend)
+        {
+            Ensure.ZeroResult(NativeMethods.git_refdb_set_backend(refdb, backend));
+        }
+
+        #endregion
+
 #region git_reference_
 
         public static unsafe ReferenceHandle git_reference_create(
@@ -1881,6 +1890,39 @@ namespace LibGit2Sharp.Core
             Ensure.ZeroResult(res);
 
             return new ReferenceHandle(handle, true);
+        }
+        
+        public static unsafe IntPtr git_reference__alloc(string name, ObjectId oid)
+        {
+            // GitOid is not nullable, do the IntPtr marshalling ourselves  
+            IntPtr oidPtr;
+
+            if (oid == null)
+            {
+                oidPtr = IntPtr.Zero;
+            }
+            else
+            {
+                oidPtr = Marshal.AllocHGlobal(20);
+                Marshal.Copy(oid.Oid.Id, 0, oidPtr, 20);
+            }
+
+            try
+            {
+                return NativeMethods.git_reference__alloc(name, oidPtr, IntPtr.Zero);
+            }
+            finally
+            {
+                if (oidPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(oidPtr);
+                }
+            }
+        }
+
+        public static IntPtr  git_reference__alloc_symbolic(string name, string target)
+        {
+            return NativeMethods.git_reference__alloc_symbolic(name, target);
         }
 
         public static unsafe ReferenceHandle git_reference_symbolic_create(
@@ -1951,6 +1993,11 @@ namespace LibGit2Sharp.Core
             return NativeMethods.git_reference_name(reference);
         }
 
+        public static unsafe string git_reference_name(ReferenceHandle reference)
+        {
+            return NativeMethods.git_reference_name(reference);
+        }
+
         public static unsafe void git_reference_remove(RepositoryHandle repo, string name)
         {
             int res = NativeMethods.git_reference_remove(repo, name);
@@ -1958,6 +2005,11 @@ namespace LibGit2Sharp.Core
         }
 
         public static unsafe ObjectId git_reference_target(git_reference* reference)
+        {
+            return ObjectId.BuildFromPtr(NativeMethods.git_reference_target(reference));
+        }
+
+        public static unsafe ObjectId git_reference_target(ReferenceHandle reference)
         {
             return ObjectId.BuildFromPtr(NativeMethods.git_reference_target(reference));
         }
@@ -2002,7 +2054,17 @@ namespace LibGit2Sharp.Core
             return NativeMethods.git_reference_symbolic_target(reference);
         }
 
+        public static unsafe string git_reference_symbolic_target(ReferenceHandle reference)
+        {
+            return NativeMethods.git_reference_symbolic_target(reference);
+        }
+
         public static unsafe GitReferenceType git_reference_type(git_reference* reference)
+        {
+            return NativeMethods.git_reference_type(reference);
+        }
+
+        public static unsafe GitReferenceType git_reference_type(ReferenceHandle reference)
         {
             return NativeMethods.git_reference_type(reference);
         }
@@ -2582,6 +2644,15 @@ namespace LibGit2Sharp.Core
         public static unsafe FilePath git_repository_path(RepositoryHandle repo)
         {
             return NativeMethods.git_repository_path(repo);
+        }
+
+        public static unsafe RefDatabaseHandle git_repository_refdb(RepositoryHandle repo)
+        {
+            git_refdb* refdb;
+            int res = NativeMethods.git_repository_refdb(out refdb, repo);
+            Ensure.ZeroResult(res);
+
+            return new RefDatabaseHandle(refdb, true);
         }
 
         public static unsafe void git_repository_set_config(RepositoryHandle repo, ConfigurationHandle config)
