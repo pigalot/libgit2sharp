@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using LibGit2Sharp.Core;
 using LibGit2Sharp.Core.Handles;
 
@@ -15,6 +12,9 @@ namespace LibGit2Sharp
         TransactionHandle transactionHandle;
         RepositoryHandle repo;
 
+        protected RefTransaction()
+        { }
+
         internal RefTransaction(Repository repository)
         {
             repo = repository.Handle;
@@ -25,7 +25,7 @@ namespace LibGit2Sharp
         /// 
         /// </summary>
         /// <param name="reference"></param>
-        public void LockReference(Reference reference)
+        public virtual void LockReference(Reference reference)
         {
             Proxy.git_transaction_lock_ref(this.transactionHandle, reference.CanonicalName);
         }
@@ -34,7 +34,7 @@ namespace LibGit2Sharp
         /// 
         /// </summary>
         /// <param name="reference"></param>
-        public void RemoveReference(Reference reference)
+        public virtual void RemoveReference(Reference reference)
         {
             Proxy.git_transaction_remove(this.transactionHandle, reference.CanonicalName);
         }
@@ -62,7 +62,7 @@ namespace LibGit2Sharp
         /// <param name="symbolicRef"></param>
         /// <param name="targetRef"></param>
         /// <param name="logMessage"></param>
-        public void UpdateTarget(Reference symbolicRef, Reference targetRef, string logMessage)
+        public virtual void UpdateTarget(Reference symbolicRef, Reference targetRef, string logMessage)
         {
             Identity ident = Proxy.git_repository_ident(repo);
             Proxy.git_transaction_set_symbolic_target(this.transactionHandle, symbolicRef.CanonicalName, targetRef.CanonicalName, ident, logMessage);
@@ -71,7 +71,7 @@ namespace LibGit2Sharp
         /// <summary>
         /// 
         /// </summary>
-        public void Commit()
+        public virtual void Commit()
         {
             Proxy.git_transaction_commit(this.transactionHandle);
         }
