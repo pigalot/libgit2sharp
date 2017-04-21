@@ -714,7 +714,7 @@ namespace LibGit2Sharp.Tests
                 reference.IsLocked = true;
             }
 
-            public override void UnlockReference(string refName)
+            public override void UnlockReference(string refName, RefdbBackendUnlockType type)
             {
                 MockRefdbReference reference;
 
@@ -722,6 +722,11 @@ namespace LibGit2Sharp.Tests
                 {
                     throw new LibGit2Sharp.NotFoundException(
                         string.Format("Reference {0} was not found.", refName));
+                }
+
+                if (type == RefdbBackendUnlockType.UnlockAndDelete)
+                {
+                    references.Remove(refName);
                 }
 
                 reference.IsLocked = false;

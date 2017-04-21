@@ -7,6 +7,27 @@ using LibGit2Sharp.Core.Handles;
 namespace LibGit2Sharp
 {
     /// <summary>
+    /// Unlock type
+    /// </summary>
+    public enum RefdbBackendUnlockType
+    {
+        /// <summary>
+        /// Unforced
+        /// </summary>
+        Unforced = 0,
+
+        /// <summary>
+        /// Forced
+        /// </summary>
+        Forced = 1,
+
+        /// <summary>
+        /// Reference is to be deleted
+        /// </summary>
+        UnlockAndDelete = 2
+    }
+
+    /// <summary>
     ///   Base class for all custom managed backends for the libgit2 reference database.
     /// </summary>
     public abstract class RefdbBackend
@@ -137,8 +158,9 @@ namespace LibGit2Sharp
         /// 
         /// </summary>
         /// <param name="refname"></param>
+        /// <param name="type"></param>
         /// <returns></returns>
-        public abstract void UnlockReference(string refname);
+        public abstract void UnlockReference(string refname, RefdbBackendUnlockType type);
 
         private IntPtr nativeBackendPointer;
 
@@ -582,7 +604,7 @@ namespace LibGit2Sharp
             public static GitErrorCode UnlockRef(
                 IntPtr backend, // git_refdb_backend
                 IntPtr payload,
-                [MarshalAs(UnmanagedType.Bool)] bool force,
+                IntPtr force,
                 [MarshalAs(UnmanagedType.Bool)] bool update_reflog,
                 IntPtr referencePtr, // const git_reference *
                 IntPtr who, // const git_signature *
@@ -598,8 +620,9 @@ namespace LibGit2Sharp
                     var referenceHandle = new ReferenceHandle(referencePtr, false);
                     string refName = Proxy.git_reference_name(referenceHandle);
                     GitReferenceType type = Proxy.git_reference_type(referenceHandle);
+                    var forceType = (RefdbBackendUnlockType)force.ToInt32();
 
-                    refdbBackend.UnlockReference(refName);
+                    refdbBackend.UnlockReference(refName, forceType);
 
                     res = GitErrorCode.Ok;
                 }

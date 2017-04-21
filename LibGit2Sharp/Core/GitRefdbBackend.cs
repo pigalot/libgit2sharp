@@ -145,7 +145,7 @@ namespace LibGit2Sharp.Core
         public delegate GitErrorCode ref_unlock_callback(
             IntPtr backend, // git_refdb_backend
             IntPtr payload,
-            [MarshalAs(UnmanagedType.Bool)] bool force,
+            IntPtr force,
             [MarshalAs(UnmanagedType.Bool)] bool update_reflog,
             IntPtr refNamePtr, // const char *
             IntPtr who, // const git_signature *
