@@ -10,14 +10,14 @@ namespace LibGit2Sharp
     public class RefTransaction : IDisposable
     {
         TransactionHandle transactionHandle;
-        RepositoryHandle repo;
+        Repository repo;
 
         protected RefTransaction()
         { }
 
         internal RefTransaction(Repository repository)
         {
-            repo = repository.Handle;
+            repo = repository;
             transactionHandle = Proxy.git_transaction_new(repository.Handle);
         }
 
@@ -27,6 +27,11 @@ namespace LibGit2Sharp
         /// <param name="reference"></param>
         public virtual void LockReference(Reference reference)
         {
+            if (repo.Refs[reference.CanonicalName] == null)
+            {
+                throw new NotFoundException(string.Format("Reference {0} no longer exists.", reference.CanonicalName));
+            }
+
             Proxy.git_transaction_lock_ref(this.transactionHandle, reference.CanonicalName);
         }
 
@@ -51,7 +56,7 @@ namespace LibGit2Sharp
             Ensure.ArgumentNotNull(directRef, "directRef");
             Ensure.ArgumentNotNull(targetId, "targetId");
 
-            Identity ident = Proxy.git_repository_ident(repo);
+            Identity ident = Proxy.git_repository_ident(repo.Handle);
 
             Proxy.git_transaction_set_target(this.transactionHandle, directRef.CanonicalName, targetId.Oid, ident, logMessage);
         }
@@ -64,7 +69,7 @@ namespace LibGit2Sharp
         /// <param name="logMessage"></param>
         public virtual void UpdateTarget(Reference symbolicRef, Reference targetRef, string logMessage)
         {
-            Identity ident = Proxy.git_repository_ident(repo);
+            Identity ident = Proxy.git_repository_ident(repo.Handle);
             Proxy.git_transaction_set_symbolic_target(this.transactionHandle, symbolicRef.CanonicalName, targetRef.CanonicalName, ident, logMessage);
         }
 

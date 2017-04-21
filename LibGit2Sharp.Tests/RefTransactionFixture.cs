@@ -144,9 +144,7 @@ namespace LibGit2Sharp.Tests
 
                 using (var tx = repo.Refs.NewRefTransaction())
                 {
-                    // Should this throw (reference no longer exists...)
-                    Assert.Throws<LibGit2SharpException>(
-                        () => tx.LockReference(myRef));
+                    Assert.Throws<NotFoundException>(() => tx.LockReference(myRef));
                 }
             }
         }
@@ -165,7 +163,7 @@ namespace LibGit2Sharp.Tests
                 using (var tx2 = repo.Refs.NewRefTransaction())
                 {
                     tx.LockReference(myRef);
-                    Assert.Throws<LibGit2SharpException>(() => tx2.LockReference(myRef));
+                    Assert.Throws<LockedFileException>(() => tx2.LockReference(myRef));
                 }
             }
         }
