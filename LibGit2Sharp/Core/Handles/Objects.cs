@@ -557,7 +557,6 @@ namespace LibGit2Sharp.Core.Handles
     }
 
     internal unsafe class RefDatabaseHandle : Libgit2Object
-
     {
         internal RefDatabaseHandle(git_refdb *ptr, bool owned)
             : base((void *) ptr, owned)
@@ -602,5 +601,4 @@ namespace LibGit2Sharp.Core.Handles
             return (git_transaction*) handle.Handle;
         }
     }
-
 }
