@@ -595,7 +595,7 @@ namespace LibGit2Sharp
                 {
                     RefdbBackend refdbBackend = MarshalRefdbBackend(backend);
 
-                    var referenceHandle = new NotOwnedReferenceSafeHandle(referencePtr);
+                    var referenceHandle = new ReferenceHandle(referencePtr, false);
                     string refName = Proxy.git_reference_name(referenceHandle);
                     GitReferenceType type = Proxy.git_reference_type(referenceHandle);
 
