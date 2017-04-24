@@ -1872,6 +1872,12 @@ namespace LibGit2Sharp.Core
             Ensure.ZeroResult(NativeMethods.git_refdb_set_backend(refdb, backend));
         }
 
+        public static unsafe void git_refdb_compress(RefDatabaseHandle refdb)
+        {
+            var result = NativeMethods.git_refdb_compress(refdb);
+            Ensure.ZeroResult(result);
+        }
+
         #endregion
 
 #region git_reference_

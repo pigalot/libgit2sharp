@@ -874,5 +874,13 @@ namespace LibGit2Sharp
         {
             Proxy.git_reference_ensure_log(repo.Handle, canonicalName);
         }
+
+        /// <summary>
+        /// Suggests that the given refdb compress or optimize its references.
+        /// </summary>
+        public virtual void Compress()
+        {
+            Proxy.git_refdb_compress(refDbHandle);
+        }
     }
 }

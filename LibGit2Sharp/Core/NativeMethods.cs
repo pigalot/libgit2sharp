@@ -1012,6 +1012,9 @@ namespace LibGit2Sharp.Core
         internal static extern unsafe int git_refdb_set_backend(git_refdb* refdb, IntPtr backend);
 
         [DllImport(libgit2)]
+        internal static extern unsafe int git_refdb_compress(git_refdb* refdb);
+
+        [DllImport(libgit2)]
         internal static extern unsafe int git_refdb_open(out git_refdb* refdb, git_repository* repo);
 
         [DllImport(libgit2)]
