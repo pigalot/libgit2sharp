@@ -668,7 +668,7 @@ namespace LibGit2Sharp.Tests
 
             public override RefdbIterator GenerateRefIterator(string glob)
             {
-                return new MockRefDbIterator(References, glob);
+                return new MockRefDbIterator(this, References, glob);
             }
 
             public override bool HasReflog(string refName)
@@ -733,7 +733,7 @@ namespace LibGit2Sharp.Tests
             IDictionary<string, MockRefdbReference> references;
             IEnumerator<KeyValuePair<string, MockRefdbReference>> nextIterator;
 
-            public MockRefDbIterator(IDictionary<string, MockRefdbReference> allRefs, string glob)
+            public MockRefDbIterator(RefdbBackend refdb, IDictionary<string, MockRefdbReference> allRefs, string glob) : base(refdb)
             {
                 if (!string.IsNullOrEmpty(glob))
                 {
@@ -768,16 +768,6 @@ namespace LibGit2Sharp.Tests
                 oid = next.Value.Oid;
                 symbolic = next.Value.Symbolic;
                 return true;
-            }
-
-            public override string NextName()
-            {
-                if (nextIterator.MoveNext())
-                {
-                    return nextIterator.Current.Key;
-                }
-
-                return null;
             }
         }
 

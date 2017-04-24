@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using LibGit2Sharp.Core;
-using LibGit2Sharp.Core.Handles;
 
 namespace LibGit2Sharp
 {
@@ -10,16 +9,52 @@ namespace LibGit2Sharp
     /// </summary>
     public abstract class RefdbIterator
     {
+        private readonly RefdbBackend refdbBackend;
+
+        protected RefdbIterator(RefdbBackend refdbBackend)
+        {
+            this.refdbBackend = refdbBackend;
+        }
+
         /// <summary>
         /// 
         /// </summary>
         public abstract bool Next(out string referenceName, out bool isSymbolic, out ObjectId oid, out string symbolic);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public abstract string NextName();
+        private bool FindNextUnbrokenName(out string referenceName)
+        {
+            bool isSymbolic;
+            ObjectId oid;
+            string symbolic;
+            if (Next(out referenceName, out isSymbolic, out oid, out symbolic))
+            {
+                bool lookupIsSymbolic;
+                ObjectId lookupOid;
+                string lookupSymbolic;
+                if (isSymbolic && !refdbBackend.Lookup(symbolic, out lookupIsSymbolic, out lookupOid, out lookupSymbolic))
+                {
+                    return FindNextUnbrokenName(out referenceName);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        private bool FindNextUnbroken(out string referenceName, out bool isSymbolic, out ObjectId oid, out string symbolic)
+        {
+            if (Next(out referenceName, out isSymbolic, out oid, out symbolic))
+            {
+                bool lookupIsSymbolic;
+                ObjectId lookupOid;
+                string lookupSymbolic;
+                if (isSymbolic && !refdbBackend.Lookup(symbolic, out lookupIsSymbolic, out lookupOid, out lookupSymbolic))
+                {
+                    return FindNextUnbroken(out referenceName, out isSymbolic, out oid, out symbolic);
+                }
+                return true;
+            }
+            return false;
+        }
 
         private IntPtr nativeBackendPointer;
 
@@ -83,7 +118,7 @@ namespace LibGit2Sharp
                 ObjectId oid;
                 string symbolic;
 
-                if (!refIter.Next(out refName, out isSymbolic, out oid, out symbolic))
+                if (!refIter.FindNextUnbroken(out refName, out isSymbolic, out oid, out symbolic))
                 {
                     return (int)GitErrorCode.IterOver;
                 }
@@ -107,7 +142,7 @@ namespace LibGit2Sharp
 
                 string refName;
 
-                if ((refName = refIter.NextName()) == null)
+                if (!refIter.FindNextUnbrokenName(out refName))
                 {
                     return (int)GitErrorCode.IterOver;
                 }
