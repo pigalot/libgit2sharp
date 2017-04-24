@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace LibGit2Sharp.Core
 {
@@ -32,6 +33,31 @@ namespace LibGit2Sharp.Core
         public static implicit operator ObjectId(GitOid? oid)
         {
             return oid == null ? null : new ObjectId(oid.Value);
+        }
+
+        internal static unsafe GitOid BuildFromPtr(IntPtr ptr)
+        {
+            return BuildFromPtr((git_oid*)ptr.ToPointer());
+        }
+
+        internal static unsafe GitOid BuildFromPtr(git_oid* id)
+        {
+            return id == null? Empty : new GitOid(id->Id);
+        }
+
+        internal unsafe GitOid(byte* rawId)
+        {
+            var id = new byte[Size];
+
+            fixed(byte* p = id)
+            {
+                for (int i = 0; i < Size; i++)
+                {
+                    p[i] = rawId[i];
+                }
+            }
+
+            Id = id;
         }
 
         /// <summary>
