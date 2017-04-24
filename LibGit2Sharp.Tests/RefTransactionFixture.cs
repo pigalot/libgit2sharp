@@ -1,8 +1,4 @@
 ﻿using LibGit2Sharp.Tests.TestHelpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Xunit;
 
 namespace LibGit2Sharp.Tests
@@ -24,8 +20,6 @@ namespace LibGit2Sharp.Tests
             }
         }
 
-        #region Shared transaction tests
-
         [Fact]
         public void ReferenceIsNotRemovedWhenTransactionIsNotCommited()
         {
@@ -44,13 +38,13 @@ namespace LibGit2Sharp.Tests
             }
         }
 
-        [Fact]
+        [SkippableFact(Skip = "Unsure of intended behavior")]
         public void ReferenceIsNotModifiedWhenTransactionIsNotCommitted()
         {
 
         }
 
-        [Fact]
+        [SkippableFact(Skip = "Unsure of intended behavior")]
         public void CanUpdateReferenceAfterTransactionIsAbandonded()
         {
 
@@ -167,7 +161,5 @@ namespace LibGit2Sharp.Tests
                 }
             }
         }
-
-        #endregion
     }
 }
