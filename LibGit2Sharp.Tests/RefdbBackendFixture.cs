@@ -582,7 +582,15 @@ namespace LibGit2Sharp.Tests
             {
                 get
                 {
-                    return RefdbBackendOperations.Compress;
+                    return RefdbBackendOperations.Exists |
+                             RefdbBackendOperations.Lookup |
+                             RefdbBackendOperations.Iterator |
+                             RefdbBackendOperations.Rename |
+                             RefdbBackendOperations.RefLock |
+                             RefdbBackendOperations.RefUnlock |
+                             RefdbBackendOperations.Write |
+                             RefdbBackendOperations.Delete |
+                             RefdbBackendOperations.Compress;
                 }
             }
 

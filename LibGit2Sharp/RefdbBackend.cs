@@ -7,27 +7,6 @@ using LibGit2Sharp.Core.Handles;
 namespace LibGit2Sharp
 {
     /// <summary>
-    /// Unlock type
-    /// </summary>
-    public enum RefdbBackendUnlockType
-    {
-        /// <summary>
-        /// Unforced
-        /// </summary>
-        Unforced = 0,
-
-        /// <summary>
-        /// Forced
-        /// </summary>
-        Forced = 1,
-
-        /// <summary>
-        /// Reference is to be deleted
-        /// </summary>
-        UnlockAndDelete = 2
-    }
-
-    /// <summary>
     ///   Base class for all custom managed backends for the libgit2 reference database.
     /// </summary>
     public abstract class RefdbBackend
@@ -35,18 +14,12 @@ namespace LibGit2Sharp
         /// <summary>
         ///  Requests the repository configured for this backend.
         /// </summary>
-        protected abstract Repository Repository
-        {
-            get;
-        }
+        protected abstract Repository Repository { get; }
 
         /// <summary>
         /// The optional operations this backed supports
         /// </summary>
-        protected abstract RefdbBackendOperations SupportedOperations
-        {
-            get;
-        }
+        protected abstract RefdbBackendOperations SupportedOperations { get; }
 
         /// <summary>
         /// Queries the backend for whether a reference exists.
@@ -172,24 +145,62 @@ namespace LibGit2Sharp
                     nativeBackend.Version = 1;
 
                     // The "free" entry point is always provided.
-                    nativeBackend.Exists = BackendEntryPoints.ExistsCallback;
-                    nativeBackend.Lookup = BackendEntryPoints.LookupCallback;
-                    nativeBackend.Iter = BackendEntryPoints.IterCallback;
-                    nativeBackend.Write = BackendEntryPoints.WriteCallback;
-                    nativeBackend.Rename = BackendEntryPoints.RenameCallback;
-                    nativeBackend.Delete = BackendEntryPoints.DeleteCallback;
-                    nativeBackend.Compress = BackendEntryPoints.CompressCallback;
-                    nativeBackend.HasLog = BackendEntryPoints.HasLogCallback;
-                    nativeBackend.EnsureLog = BackendEntryPoints.EnsureLogCallback;
                     nativeBackend.FreeBackend = BackendEntryPoints.FreeCallback;
-                    nativeBackend.ReflogWrite = BackendEntryPoints.ReflogWriteCallback;
-                    nativeBackend.ReflogRead = BackendEntryPoints.ReflogReadCallback;
-                    nativeBackend.ReflogRename = BackendEntryPoints.ReflogRenameCallback;
-                    nativeBackend.ReflogDelete = BackendEntryPoints.ReflogDeleteCallback;
-                    nativeBackend.RefLock = BackendEntryPoints.RefLockCallback;
-                    nativeBackend.RefUnlock = BackendEntryPoints.RefUnlockCallback;
 
-                    var supportedOperations = this.SupportedOperations;
+                    var supportedOperations = SupportedOperations;
+
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Exists))
+                    {
+                        nativeBackend.Exists = BackendEntryPoints.ExistsCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Lookup))
+                    {
+                        nativeBackend.Lookup = BackendEntryPoints.LookupCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Iterator))
+                    {
+                        nativeBackend.Iter = BackendEntryPoints.IterCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Write))
+                    {
+                        nativeBackend.Write = BackendEntryPoints.WriteCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Rename))
+                    {
+                        nativeBackend.Rename = BackendEntryPoints.RenameCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Delete))
+                    {
+                        nativeBackend.Delete = BackendEntryPoints.DeleteCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Compress))
+                    {
+                        nativeBackend.Compress = BackendEntryPoints.CompressCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.HasLog))
+                    {
+                        nativeBackend.HasLog = BackendEntryPoints.HasLogCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.EnsureLog))
+                    {
+                        nativeBackend.EnsureLog = BackendEntryPoints.EnsureLogCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.RefLock))
+                    {
+                        nativeBackend.RefLock = BackendEntryPoints.RefLockCallback;
+                    }
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.RefUnlock))
+                    {
+                        nativeBackend.RefUnlock = BackendEntryPoints.RefUnlockCallback;
+                    }
+
+                    if (supportedOperations.HasFlag(RefdbBackendOperations.Reflog))
+                    {
+                        nativeBackend.ReflogWrite = BackendEntryPoints.ReflogWriteCallback;
+                        nativeBackend.ReflogRead = BackendEntryPoints.ReflogReadCallback;
+                        nativeBackend.ReflogRename = BackendEntryPoints.ReflogRenameCallback;
+                        nativeBackend.ReflogDelete = BackendEntryPoints.ReflogDeleteCallback;
+                    }
 
                     nativeBackend.GCHandle = GCHandle.ToIntPtr(GCHandle.Alloc(this));
                     nativeBackendPointer = Marshal.AllocHGlobal(Marshal.SizeOf(nativeBackend));
@@ -667,20 +678,91 @@ namespace LibGit2Sharp
         }
 
         /// <summary>
+        /// Unlock type
+        /// </summary>
+        public enum RefdbBackendUnlockType
+        {
+            /// <summary>
+            /// Unforced
+            /// </summary>
+            Unforced = 0,
+
+            /// <summary>
+            /// Forced
+            /// </summary>
+            Forced = 1,
+
+            /// <summary>
+            /// Reference is to be deleted
+            /// </summary>
+            UnlockAndDelete = 2
+        }
+
+        /// <summary>
         ///   Flags used by subclasses of RefdbBackend to indicate which operations they support.
         /// </summary>
         [Flags]
         public enum RefdbBackendOperations
         {
             /// <summary>
-            ///   This RefdbBackend declares that it supports the Compress method.
+            /// This RefdbBackend declares that it supports the Exists method.
             /// </summary>
-            Compress = 1,
+            Exists = 1 << 0,
 
             /// <summary>
-            /// The RefdbBackend declares that it supports Reflog operations
+            /// This RefdbBackend declares that it supports the Lookup method.
             /// </summary>
-            Reflog = 2,
+            Lookup = 1 << 1,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the Iterator method.
+            /// </summary>
+            Iterator = 1 << 2,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the Write method.
+            /// </summary>
+            Write = 1 << 3,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the Rename method.
+            /// </summary>
+            Rename = 1 << 4,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the Delete method.
+            /// </summary>
+            Delete = 1 << 5,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the Compress method.
+            /// </summary>
+            Compress = 1 << 6,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the HasLog method.
+            /// </summary>
+            HasLog = 1 << 7,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the EnsureLog method.
+            /// </summary>
+            EnsureLog = 1 << 8,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the RefLock method.
+            /// </summary>
+            RefLock = 1 << 9,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports the RefUnlock method.
+            /// </summary>
+            RefUnlock = 1 << 10,
+
+            /// <summary>
+            /// This RefdbBackend declares that it supports Reflog operations.
+            /// </summary>
+            Reflog = 1 << 11
         }
     }
 }
