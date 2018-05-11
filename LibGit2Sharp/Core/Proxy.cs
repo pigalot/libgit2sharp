@@ -1865,6 +1865,21 @@ namespace LibGit2Sharp.Core
 
 #endregion
 
+#region git_refdb_
+
+        public static unsafe void git_refdb_set_backend(RefDatabaseHandle refdb, IntPtr backend)
+        {
+            Ensure.ZeroResult(NativeMethods.git_refdb_set_backend(refdb, backend));
+        }
+
+        public static unsafe void git_refdb_compress(RefDatabaseHandle refdb)
+        {
+            var result = NativeMethods.git_refdb_compress(refdb);
+            Ensure.ZeroResult(result);
+        }
+
+        #endregion
+
 #region git_reference_
 
         public static unsafe ReferenceHandle git_reference_create(
@@ -1881,6 +1896,39 @@ namespace LibGit2Sharp.Core
             Ensure.ZeroResult(res);
 
             return new ReferenceHandle(handle, true);
+        }
+        
+        public static unsafe IntPtr git_reference__alloc(string name, ObjectId oid)
+        {
+            // GitOid is not nullable, do the IntPtr marshalling ourselves  
+            IntPtr oidPtr;
+
+            if (oid == null)
+            {
+                oidPtr = IntPtr.Zero;
+            }
+            else
+            {
+                oidPtr = Marshal.AllocHGlobal(20);
+                Marshal.Copy(oid.Oid.Id, 0, oidPtr, 20);
+            }
+
+            try
+            {
+                return NativeMethods.git_reference__alloc(name, oidPtr, IntPtr.Zero);
+            }
+            finally
+            {
+                if (oidPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(oidPtr);
+                }
+            }
+        }
+
+        public static IntPtr  git_reference__alloc_symbolic(string name, string target)
+        {
+            return NativeMethods.git_reference__alloc_symbolic(name, target);
         }
 
         public static unsafe ReferenceHandle git_reference_symbolic_create(
@@ -1951,6 +1999,11 @@ namespace LibGit2Sharp.Core
             return NativeMethods.git_reference_name(reference);
         }
 
+        public static unsafe string git_reference_name(ReferenceHandle reference)
+        {
+            return NativeMethods.git_reference_name(reference);
+        }
+
         public static unsafe void git_reference_remove(RepositoryHandle repo, string name)
         {
             int res = NativeMethods.git_reference_remove(repo, name);
@@ -1958,6 +2011,11 @@ namespace LibGit2Sharp.Core
         }
 
         public static unsafe ObjectId git_reference_target(git_reference* reference)
+        {
+            return ObjectId.BuildFromPtr(NativeMethods.git_reference_target(reference));
+        }
+
+        public static unsafe ObjectId git_reference_target(ReferenceHandle reference)
         {
             return ObjectId.BuildFromPtr(NativeMethods.git_reference_target(reference));
         }
@@ -2002,7 +2060,17 @@ namespace LibGit2Sharp.Core
             return NativeMethods.git_reference_symbolic_target(reference);
         }
 
+        public static unsafe string git_reference_symbolic_target(ReferenceHandle reference)
+        {
+            return NativeMethods.git_reference_symbolic_target(reference);
+        }
+
         public static unsafe GitReferenceType git_reference_type(git_reference* reference)
+        {
+            return NativeMethods.git_reference_type(reference);
+        }
+
+        public static unsafe GitReferenceType git_reference_type(ReferenceHandle reference)
         {
             return NativeMethods.git_reference_type(reference);
         }
@@ -2462,6 +2530,23 @@ namespace LibGit2Sharp.Core
             return RepositoryStateChecker(repo, NativeMethods.git_repository_head_unborn);
         }
 
+        public static unsafe Identity git_repository_ident(RepositoryHandle repo)
+        {
+            string name;
+            string email;
+
+            int res = NativeMethods.git_repository_ident(out name, out email, repo);
+            Ensure.ZeroResult(res);
+
+            if (string.IsNullOrEmpty(name) ||
+                string.IsNullOrEmpty(email))
+            {
+                return null;
+            }
+
+            return new Identity(name, email);
+        }
+
         public static unsafe IndexHandle git_repository_index(RepositoryHandle repo)
         {
             git_index* handle;
@@ -2596,6 +2681,15 @@ namespace LibGit2Sharp.Core
         public static unsafe FilePath git_repository_path(RepositoryHandle repo)
         {
             return NativeMethods.git_repository_path(repo);
+        }
+
+        public static unsafe RefDatabaseHandle git_repository_refdb(RepositoryHandle repo)
+        {
+            git_refdb* refdb;
+            int res = NativeMethods.git_repository_refdb(out refdb, repo);
+            Ensure.ZeroResult(res);
+
+            return new RefDatabaseHandle(refdb, true);
         }
 
         public static unsafe void git_repository_set_config(RepositoryHandle repo, ConfigurationHandle config)
@@ -3209,6 +3303,75 @@ namespace LibGit2Sharp.Core
         {
             int res = NativeMethods.git_trace_set(level, callback);
             Ensure.ZeroResult(res);
+        }
+
+        #endregion
+
+        #region git_transaction_
+
+        public static unsafe TransactionHandle git_transaction_new(RepositoryHandle repo)
+        {
+            git_transaction* tx;
+            int res = NativeMethods.git_transaction_new(out tx, repo);
+            Ensure.ZeroResult(res);
+            return new TransactionHandle(tx, true);
+        }
+
+        public static unsafe void git_transaction_lock_ref(TransactionHandle tx, string refName)
+        {
+            int res = NativeMethods.git_transaction_lock_ref(tx, refName);
+            Ensure.ZeroResult(res);
+        }
+
+        public static unsafe void git_transaction_set_target(TransactionHandle tx, string refName, GitOid oid, Identity ident, string msg)
+        {
+            using (SignatureHandle sigHandle = ident.SafeBuildNowSignatureHandle())
+            {
+                int res = NativeMethods.git_transaction_set_target(tx, refName, ref oid, sigHandle, msg);
+                Ensure.ZeroResult(res);
+            }
+        }
+
+        public static unsafe void git_transaction_set_symbolic_target(
+            TransactionHandle tx,
+            string refName,
+            string target,
+            Identity ident,
+            string msg)
+        {
+            using (SignatureHandle sigHandle = ident.SafeBuildNowSignatureHandle())
+            {
+                int res = NativeMethods.git_transaction_set_symbolic_target(
+                    tx,
+                    refName,
+                    target,
+                    sigHandle,
+                    msg);
+                Ensure.ZeroResult(res);
+            }
+        }
+
+        public static unsafe void git_transaction_set_reflog(TransactionHandle tx, string refName, IntPtr reflog)
+        {
+            int res = NativeMethods.git_transaction_set_reflog(tx, refName, reflog);
+            Ensure.ZeroResult(res);
+        }
+
+        public static unsafe void git_transaction_remove(TransactionHandle tx, string refName)
+        {
+            int res = NativeMethods.git_transaction_remove(tx, refName);
+            Ensure.ZeroResult(res);
+        }
+
+        public static unsafe void git_transaction_commit(TransactionHandle tx)
+        {
+            int res = NativeMethods.git_transaction_commit(tx);
+            Ensure.ZeroResult(res);
+        }
+
+        public static unsafe void git_transaction_free(TransactionHandle tx)
+        {
+            NativeMethods.git_transaction_free(tx);
         }
 
 #endregion
