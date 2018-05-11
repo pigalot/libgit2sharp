@@ -29,6 +29,22 @@ namespace LibGit2Sharp
         protected Configuration()
         { }
 
+        internal Configuration(Repository repository, bool isInMemory)
+        {
+            if (isInMemory)
+            {
+                configHandle = Proxy.git_config_new();
+
+                Proxy.git_repository_set_config(repository.Handle, configHandle);
+            }
+            else
+            {
+                configHandle = Proxy.git_repository_config(repository.Handle);
+            }
+
+            repository.RegisterForCleanup(configHandle);
+        }
+
         internal Configuration(
             Repository repository,
             string repositoryConfigurationFileLocation,

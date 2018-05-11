@@ -2711,6 +2711,15 @@ namespace LibGit2Sharp.Core
             NativeMethods.git_repository_set_config(repo, config);
         }
 
+        public static unsafe ConfigurationHandle git_repository_config(RepositoryHandle repo)
+        {
+            git_config* config;
+            int res = NativeMethods.git_repository_config(out config, repo);
+            Ensure.ZeroResult(res);
+
+            return new ConfigurationHandle(config, true);
+        }
+
         public static unsafe void git_repository_set_ident(RepositoryHandle repo, string name, string email)
         {
             int res = NativeMethods.git_repository_set_ident(repo, name, email);

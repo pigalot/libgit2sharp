@@ -168,11 +168,7 @@ namespace LibGit2Sharp
                 tags = new TagCollection(this);
                 stashes = new StashCollection(this);
                 info = new Lazy<RepositoryInformation>(() => new RepositoryInformation(this, isBare));
-                config = new Lazy<Configuration>(() => RegisterForCleanup(new Configuration(this,
-                                                                                            null,
-                                                                                            configurationGlobalFilePath,
-                                                                                            configurationXDGFilePath,
-                                                                                            configurationSystemFilePath)));
+                config = new Lazy<Configuration>(() => RegisterForCleanup(new Configuration(this, isInMemory)));
                 odb = new Lazy<ObjectDatabase>(() => new ObjectDatabase(this, isInMemory));
 
                 diff = new Diff(this);

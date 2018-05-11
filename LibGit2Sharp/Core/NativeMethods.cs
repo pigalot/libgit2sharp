@@ -1460,6 +1460,9 @@ namespace LibGit2Sharp.Core
             git_config* config);
 
         [DllImport(libgit2)]
+        internal static extern unsafe int git_repository_config(out git_config* config, git_repository* repo);
+
+        [DllImport(libgit2)]
         private static extern unsafe int git_repository_set_ident(
             git_repository* repo,
             [CustomMarshaler(typeof(StrictUtf8Marshaler), typeof(string))] byte* name,
