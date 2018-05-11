@@ -78,14 +78,16 @@ namespace LibGit2Sharp
             {
                 Version = 1,
                 Show = (GitStatusShow)options.Show,
-                Flags =
-                    GitStatusOptionFlags.IncludeUntracked |
-                    GitStatusOptionFlags.RecurseUntrackedDirs,
             };
 
             if (options.IncludeIgnored)
             {
                 coreOptions.Flags |= GitStatusOptionFlags.IncludeIgnored;
+            }
+
+            if (options.IncludeUntracked)
+            {
+                coreOptions.Flags |= GitStatusOptionFlags.IncludeUntracked;
             }
 
             if (options.DetectRenamesInIndex)
@@ -112,6 +114,12 @@ namespace LibGit2Sharp
             {
                 coreOptions.Flags |=
                     GitStatusOptionFlags.RecurseIgnoredDirs;
+            }
+
+            if (options.RecurseUntrackedDirs)
+            {
+                coreOptions.Flags |=
+                    GitStatusOptionFlags.RecurseUntrackedDirs;
             }
 
             if (options.PathSpec != null)
@@ -142,24 +150,24 @@ namespace LibGit2Sharp
             if ((gitStatus & FileStatus.RenamedInIndex) == FileStatus.RenamedInIndex)
             {
                 headToIndexRenameDetails =
-                    new RenameDetails(LaxFilePathMarshaler.FromNative(deltaHeadToIndex->old_file.Path).Native,
-                                      LaxFilePathMarshaler.FromNative(deltaHeadToIndex->new_file.Path).Native,
+                    new RenameDetails(LaxUtf8Marshaler.FromNative(deltaHeadToIndex->old_file.Path),
+                                      LaxUtf8Marshaler.FromNative(deltaHeadToIndex->new_file.Path),
                                       (int)deltaHeadToIndex->similarity);
             }
 
             if ((gitStatus & FileStatus.RenamedInWorkdir) == FileStatus.RenamedInWorkdir)
             {
                 indexToWorkDirRenameDetails =
-                    new RenameDetails(LaxFilePathMarshaler.FromNative(deltaIndexToWorkDir->old_file.Path).Native,
-                                      LaxFilePathMarshaler.FromNative(deltaIndexToWorkDir->new_file.Path).Native,
+                    new RenameDetails(LaxUtf8Marshaler.FromNative(deltaIndexToWorkDir->old_file.Path),
+                                      LaxUtf8Marshaler.FromNative(deltaIndexToWorkDir->new_file.Path),
                                       (int)deltaIndexToWorkDir->similarity);
             }
 
-            var filePath = (deltaIndexToWorkDir != null)
-                ? LaxFilePathMarshaler.FromNative(deltaIndexToWorkDir->new_file.Path)
-                : LaxFilePathMarshaler.FromNative(deltaHeadToIndex->new_file.Path);
+            var filePath = LaxUtf8Marshaler.FromNative(deltaIndexToWorkDir != null ?
+                deltaIndexToWorkDir->new_file.Path :
+                deltaHeadToIndex->new_file.Path);
 
-            StatusEntry statusEntry = new StatusEntry(filePath.Native, gitStatus, headToIndexRenameDetails, indexToWorkDirRenameDetails);
+            StatusEntry statusEntry = new StatusEntry(filePath, gitStatus, headToIndexRenameDetails, indexToWorkDirRenameDetails);
 
             if (gitStatus == FileStatus.Unaltered)
             {

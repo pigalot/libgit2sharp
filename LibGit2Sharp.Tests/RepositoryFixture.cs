@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using LibGit2Sharp.Tests.TestHelpers;
 using Xunit;
-using Xunit.Extensions;
 
 namespace LibGit2Sharp.Tests
 {
@@ -167,6 +166,10 @@ namespace LibGit2Sharp.Tests
 
         private static void AssertIsHidden(string repoPath)
         {
+            //Workaround for .NET Core 1.x never considering a directory hidden if the path has a trailing slash
+            //https://github.com/dotnet/corefx/issues/18520
+            repoPath = repoPath.TrimEnd('/');
+
             FileAttributes attribs = File.GetAttributes(repoPath);
 
             Assert.Equal(FileAttributes.Hidden, (attribs & FileAttributes.Hidden));
@@ -681,6 +684,8 @@ namespace LibGit2Sharp.Tests
         {
             using (var repo = new Repository())
             {
+                Assert.NotNull(repo.ObjectDatabase);
+
                 Assert.True(repo.Info.IsBare);
                 Assert.Null(repo.Info.Path);
                 Assert.Null(repo.Info.WorkingDirectory);

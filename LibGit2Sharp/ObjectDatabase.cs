@@ -25,10 +25,20 @@ namespace LibGit2Sharp
         protected ObjectDatabase()
         { }
 
-        internal ObjectDatabase(Repository repo)
+        internal ObjectDatabase(Repository repo, bool isInMemory)
         {
             this.repo = repo;
-            handle = Proxy.git_repository_odb(repo.Handle);
+
+            if (isInMemory)
+            {
+                handle = Proxy.git_odb_new();
+
+                Proxy.git_repository_set_odb(repo.Handle, handle.AsIntPtr());
+            }
+            else
+            {
+                handle = Proxy.git_repository_odb(repo.Handle);
+            }
 
             repo.RegisterForCleanup(handle);
         }
@@ -239,7 +249,7 @@ namespace LibGit2Sharp
             }
 
             IntPtr writestream_ptr = Proxy.git_blob_create_fromstream(repo.Handle, hintpath);
-            GitWriteStream writestream = (GitWriteStream)Marshal.PtrToStructure(writestream_ptr, typeof(GitWriteStream));
+            GitWriteStream writestream = MarshalPortable.PtrToStructure<GitWriteStream>(writestream_ptr);
 
             try
             {

@@ -23,6 +23,7 @@ namespace LibGit2Sharp
         {
             if (Platform.OperatingSystem == OperatingSystemType.Windows)
             {
+#if DESKTOP
                 /* Assembly.CodeBase is not actually a correctly formatted
                  * URI.  It's merely prefixed with `file:///` and has its
                  * backslashes flipped.  This is superior to EscapedCodeBase,
@@ -43,7 +44,12 @@ namespace LibGit2Sharp
                     managedPath = @"\\" + managedPath.Substring(7).Replace('/', '\\');
                 }
 
-                nativeLibraryPath = Path.Combine(Path.Combine(Path.GetDirectoryName(managedPath), "lib"), "win32");
+                managedPath = Path.GetDirectoryName(managedPath);
+#else
+                string managedPath = AppContext.BaseDirectory;
+#endif
+
+                nativeLibraryPath = Path.Combine(managedPath, "lib", "win32");
             }
 
             registeredFilters = new Dictionary<Filter, FilterRegistration>();
@@ -317,6 +323,20 @@ namespace LibGit2Sharp
         {
             var pathString = (paths == null) ? null : string.Join(Path.PathSeparator.ToString(), paths);
             Proxy.git_libgit2_opts_set_search_path(level, pathString);
+        }
+
+        public static void SetStrictHashVerification(bool enabled)
+        {
+            Proxy.git_libgit2_opts_enable_strict_hash_verification(enabled);
+        }
+
+        /// <summary>
+        /// Enable or disable the libgit2 cache
+        /// </summary>
+        /// <param name="enabled">true to enable the cache, false otherwise</param>
+        public static void SetEnableCaching(bool enabled)
+        {
+            Proxy.git_libgit2_opts_set_enable_caching(enabled);
         }
     }
 }

@@ -10,13 +10,30 @@
   - Windows (x86/amd64): <https://ci.appveyor.com/project/libgit2/libgit2sharp>
   - Linux/Mac OS X: <https://travis-ci.org/libgit2/libgit2sharp>
 
-## v0.23 + 1
+## v0.24 + 1
 
 ### Additions
 
 ### Changes
 
+ - Status now does not show untracked files by default.  To retrieve
+   untracked files, included the `StatusOptions.IncludeUntracked` and/or
+   the `StatusOptions.RecurseUntrackedDirs` options.
+ - Status now does not show the ignored files by default.  To retrieve
+   ignored files, include the `StatusOptions.IncludeIgnored` option.
+
 ### Fixes
+
+ - The exception thrown when the native library cannot be loaded is now
+   able to be caught and will no longer crash the process.
+
+## v0.24 - ([diff](https://github.com/libgit2/libgit2sharp/compare/v0.23..v0.24))
+
+This is the last release before a moving to .NET Core compatible library.
+
+It will be the last supported release with the prior architecture; as a
+result, this release is primarily bugfixes and does not include major new
+APIs.
 
 ## v0.23 - ([diff](https://github.com/libgit2/libgit2sharp/compare/v0.22..v0.23))
 

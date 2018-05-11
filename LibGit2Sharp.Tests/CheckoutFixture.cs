@@ -97,7 +97,7 @@ namespace LibGit2Sharp.Tests
 
         [Theory]
         [InlineData("6dcf9bf", true, "6dcf9bf")]
-        [InlineData("refs/tags/lw", true, "refs/tags/lw")]
+        [InlineData("refs/tags/lw", true, "lw")]
         [InlineData("HEAD~2", true, "HEAD~2")]
         [InlineData("6dcf9bf", false, "6dcf9bf7541ee10456529833502442f385010c3d")]
         [InlineData("refs/tags/lw", false, "e90810b8df3e80c413d903f631643c716887138d")]
@@ -625,7 +625,7 @@ namespace LibGit2Sharp.Tests
                     "bin/some_ignored_file.txt",
                     "hello from this ignored file.");
 
-                Assert.Equal(1, repo.RetrieveStatus().Ignored.Count());
+                Assert.Equal(1, repo.RetrieveStatus(new StatusOptions { IncludeIgnored = true }).Ignored.Count());
 
                 Assert.Equal(FileStatus.Ignored, repo.RetrieveStatus(ignoredFilePath));
 
@@ -652,7 +652,7 @@ namespace LibGit2Sharp.Tests
                     "bin/some_ignored_file.txt",
                     "hello from this ignored file.");
 
-                Assert.Equal(1, repo.RetrieveStatus().Ignored.Count());
+                Assert.Equal(1, repo.RetrieveStatus(new StatusOptions { IncludeIgnored = true }).Ignored.Count());
 
                 Assert.Equal(FileStatus.Ignored, repo.RetrieveStatus(ignoredFilePath));
 
@@ -748,7 +748,7 @@ namespace LibGit2Sharp.Tests
 
         [Theory]
         [InlineData("a447ba2ca8")]
-        [InlineData("refs/tags/lw")]
+        [InlineData("lw")]
         [InlineData("e90810^{}")]
         public void CheckoutFromDetachedHead(string commitPointer)
         {
