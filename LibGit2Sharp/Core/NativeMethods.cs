@@ -1421,7 +1421,7 @@ namespace LibGit2Sharp.Core
             out git_repository* repo);
 
         [DllImport(libgit2)]
-        internal static extern unsafe void git_repository_set_odb(git_repository* repo, IntPtr odb);
+        internal static extern unsafe void git_repository_set_odb(git_repository* repo, git_odb* odb);
 
         [DllImport(libgit2)]
         internal static extern unsafe int git_odb_new(out git_odb* odb);

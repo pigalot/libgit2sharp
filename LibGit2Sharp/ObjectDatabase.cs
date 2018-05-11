@@ -33,7 +33,7 @@ namespace LibGit2Sharp
             {
                 handle = Proxy.git_odb_new();
 
-                Proxy.git_repository_set_odb(repo.Handle, handle.AsIntPtr());
+                Proxy.git_repository_set_odb(repo.Handle, handle);
             }
             else
             {
