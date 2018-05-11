@@ -28,10 +28,19 @@ namespace LibGit2Sharp
         /// Initializes a new instance of the <see cref="ReferenceCollection"/> class.
         /// </summary>
         /// <param name="repo">The repo.</param>
-        internal ReferenceCollection(Repository repo)
+        internal ReferenceCollection(Repository repo, bool isInMemory)
         {
             this.repo = repo;
-            refDbHandle = Proxy.git_repository_refdb(repo.Handle);
+            if (isInMemory)
+            {
+                refDbHandle = Proxy.git_refdb_new(repo.Handle);
+                Proxy.git_repository_set_refdb(repo.Handle, refDbHandle);
+            }
+            else
+            {
+                refDbHandle = Proxy.git_repository_refdb(repo.Handle);
+            }
+            
 
             repo.RegisterForCleanup(refDbHandle);
         }

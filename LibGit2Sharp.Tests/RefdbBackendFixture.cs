@@ -311,6 +311,22 @@ namespace LibGit2Sharp.Tests
         }
 
         [Fact]
+        public void CanCreateInMemoryRepositoryWithBackend()
+        {
+            using (var repo = new Repository())
+            {
+                var backend = new MockRefdbBackend(repo);
+                repo.Refs.SetBackend(backend);
+
+                Assert.True(repo.Info.IsBare);
+                Assert.Null(repo.Info.Path);
+                Assert.Null(repo.Info.WorkingDirectory);
+
+                Assert.Throws<BareRepositoryException>(() => { var idx = repo.Index; });
+            }
+        }
+
+        [Fact]
         public void CanCompressFromRefDbBackend()
         {
         }

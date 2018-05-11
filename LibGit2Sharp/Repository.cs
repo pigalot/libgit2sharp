@@ -164,6 +164,7 @@ namespace LibGit2Sharp
 
                 commits = new CommitLog(this);
                 refs = new ReferenceCollection(this);
+                refs = new ReferenceCollection(this, isInMemory); // ToDo: Should this be lazy?
                 branches = new BranchCollection(this);
                 tags = new TagCollection(this);
                 stashes = new StashCollection(this);

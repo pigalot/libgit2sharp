@@ -2612,7 +2612,7 @@ namespace LibGit2Sharp.Core
             }
         }
 
-        public static unsafe void git_repository_set_odb(RepositoryHandle repo, IntPtr gitOdbBackendPointer)
+        public static unsafe void git_repository_set_odb(RepositoryHandle repo, ObjectDatabaseHandle gitOdbBackendPointer)
         {
             NativeMethods.git_repository_set_odb(repo, gitOdbBackendPointer);
         }
@@ -2681,6 +2681,20 @@ namespace LibGit2Sharp.Core
         public static unsafe FilePath git_repository_path(RepositoryHandle repo)
         {
             return NativeMethods.git_repository_path(repo);
+        }
+
+        public static unsafe void git_repository_set_refdb(RepositoryHandle repo, RefDatabaseHandle refdb)
+        {
+            NativeMethods.git_repository_set_refdb(repo, refdb);
+        }
+
+        public static unsafe RefDatabaseHandle git_refdb_new(RepositoryHandle repo)
+        {
+            git_refdb* handle;
+            var res = NativeMethods.git_refdb_new(out handle, repo);
+            Ensure.ZeroResult(res);
+
+            return new RefDatabaseHandle(handle, true);
         }
 
         public static unsafe RefDatabaseHandle git_repository_refdb(RepositoryHandle repo)

@@ -1446,6 +1446,12 @@ namespace LibGit2Sharp.Core
         private static extern unsafe byte* git_repository_path_(git_repository* repository);
 
         [DllImport(libgit2)]
+        internal static extern unsafe void git_repository_set_refdb(git_repository* repo, git_refdb* refdb);
+
+        [DllImport(libgit2)]
+        internal static extern unsafe int git_refdb_new(out git_refdb* refdb, git_repository* repo);
+
+        [DllImport(libgit2)]
         internal static extern unsafe int git_repository_refdb(out git_refdb* refdb, git_repository* repo);
 
         [DllImport(libgit2)]
