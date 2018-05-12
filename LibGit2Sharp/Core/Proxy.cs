@@ -517,6 +517,11 @@ namespace LibGit2Sharp.Core
 
         #region git_config_
 
+        public static unsafe void git_config_add_backend(ConfigurationHandle config, IntPtr backend, ConfigurationLevel level, RepositoryHandle repo)
+        {
+            Ensure.ZeroResult(NativeMethods.git_config_add_backend(config, backend, (uint)level, repo, 1));
+        }
+
         public static unsafe void git_config_add_file_ondisk(ConfigurationHandle config, FilePath path, ConfigurationLevel level)
         {
             int res = NativeMethods.git_config_add_file_ondisk(config, path, (uint)level, true);

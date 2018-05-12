@@ -1,5 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Globalization;
+using System.Text;
+using LibGit2Sharp.Core;
 
 namespace LibGit2Sharp
 {
@@ -50,6 +53,22 @@ namespace LibGit2Sharp
             {
                 return string.Format(CultureInfo.InvariantCulture, "{0} = \"{1}\"", Key, Value);
             }
+        }
+
+        internal unsafe GitConfigEntry GetGitConfigEntry()
+        {
+            var namePtr = EncodingMarshaler.FromManaged(Encoding.UTF8, Key);
+            IntPtr valuePtr = IntPtr.Zero;
+
+            var value = Value as string;
+            if (value != null)
+            {
+                valuePtr = EncodingMarshaler.FromManaged(Encoding.UTF8, value);
+            }
+
+            var level = (uint)Level;
+
+            return new GitConfigEntry { namePtr = (char*)namePtr, valuePtr = (char*)valuePtr, level = level };
         }
     }
 }

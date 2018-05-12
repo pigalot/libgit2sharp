@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace LibGit2Sharp.Core
 {
@@ -11,7 +8,7 @@ namespace LibGit2Sharp.Core
     {
         static GitConfigBackend()
         {
-            GCHandleOffset = Marshal.OffsetOf(typeof(GitRefDbBackend), "GCHandle").ToInt32();
+            GCHandleOffset = MarshalPortable.OffsetOf<GitConfigBackend>(nameof(GCHandle)).ToInt32();
         }
 
         public uint Version;
@@ -48,7 +45,7 @@ namespace LibGit2Sharp.Core
 
         public delegate int open_callback(
             IntPtr backend,
-            LogLevel level);
+            uint level);
 
         public delegate int get_callback(
             IntPtr backend,

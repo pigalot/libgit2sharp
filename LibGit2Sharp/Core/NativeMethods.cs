@@ -384,6 +384,10 @@ namespace LibGit2Sharp.Core
         internal static extern unsafe int git_config_new(out git_config* cfg);
 
         [DllImport(libgit2)]
+        internal static extern unsafe int git_config_add_backend(git_config* cfg, IntPtr backend, uint level, git_repository* repo,
+            int force);
+
+        [DllImport(libgit2)]
         internal static extern unsafe int git_config_open_level(
             out git_config* cfg,
             git_config* parent,

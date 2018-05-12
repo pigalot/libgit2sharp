@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using LibGit2Sharp.Core;
 
 namespace LibGit2Sharp
 {
-    public abstract class ConfigBackend
+    public abstract class ConfigurationBackend<TConfigurationValue, TConfigurationIterator> where TConfigurationValue : class where TConfigurationIterator : ConfigurationIterator<TConfigurationValue>
     {
         /// <summary>
         /// Invoked by libgit2 when this backend is no longer needed.
@@ -29,9 +27,9 @@ namespace LibGit2Sharp
         /// </summary>
         protected abstract ConfigBackendOperations SupportedOperations { get; }
 
-        public abstract int Open(LogLevel level);
+        public abstract int Open(ConfigurationLevel level);
 
-        public abstract int Get(string key, out ConfigurationEntry<string> configurationEntry);
+        public abstract int Get(string key, out ConfigurationEntry<TConfigurationValue> configurationEntry);
 
         public abstract int Set(string key, string value);
 
@@ -41,9 +39,9 @@ namespace LibGit2Sharp
 
         public abstract int DelMultivar(string Name, string regexp);
 
-        public abstract int Iterator(out object iterator); // ToDo: impliment iterator
+        public abstract int Iterator(out TConfigurationIterator iterator);
 
-        public abstract int Snapshot(out ConfigBackend configSnapshot);
+        public abstract int Snapshot(out ConfigurationBackend<TConfigurationValue, TConfigurationIterator> configSnapshot);
 
         public abstract int Lock();
 
@@ -142,24 +140,24 @@ namespace LibGit2Sharp
             public static readonly GitConfigBackend.unlock_callback UnlockCallback = Unlock;
             public static readonly GitConfigBackend.free_callback FreeCallback = Free;
 
-            private static ConfigBackend MarshalConfigBackend(IntPtr backendPtr)
+            private static ConfigurationBackend<TConfigurationValue, TConfigurationIterator> MarshalConfigurationBackend(IntPtr backendPtr)
             {
 
                 var intPtr = Marshal.ReadIntPtr(backendPtr, GitConfigBackend.GCHandleOffset);
-                var configBackend = GCHandle.FromIntPtr(intPtr).Target as ConfigBackend;
+                var configBackend = GCHandle.FromIntPtr(intPtr).Target as ConfigurationBackend<TConfigurationValue, TConfigurationIterator>;
 
                 if (configBackend == null)
                 {
-                    Proxy.giterr_set_str(GitErrorCategory.Reference, "Cannot retrieve the managed ConfigBackend.");
+                    Proxy.giterr_set_str(GitErrorCategory.Reference, "Cannot retrieve the managed ConfigurationBackend.");
                     return null;
                 }
 
                 return configBackend;
             }
 
-            private static int Open(IntPtr backend, LogLevel level)
+            private static int Open(IntPtr backend, uint level)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -167,7 +165,7 @@ namespace LibGit2Sharp
 
                 try
                 {
-                    int toReturn = configBackend.Open(level);
+                    int toReturn = configBackend.Open((ConfigurationLevel)level);
 
                     if (toReturn != 0)
                     {
@@ -187,7 +185,7 @@ namespace LibGit2Sharp
             {
                 entry = default(GitConfigEntry);
 
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -195,7 +193,7 @@ namespace LibGit2Sharp
                 
                 try
                 {
-                    ConfigurationEntry<string> configurationEntry;
+                    ConfigurationEntry<TConfigurationValue> configurationEntry;
                     int toReturn = configBackend.Get(key, out configurationEntry);
 
                     if (toReturn != 0)
@@ -203,11 +201,7 @@ namespace LibGit2Sharp
                         return toReturn;
                     }
 
-                    var namePtr = EncodingMarshaler.FromManaged(Encoding.UTF8, configurationEntry.Key);
-                    var valuePtr = EncodingMarshaler.FromManaged(Encoding.UTF8, configurationEntry.Value);
-                    var level = (uint)configurationEntry.Level;
-
-                    entry = new GitConfigEntry { namePtr = (char*)namePtr, valuePtr = (char*)valuePtr, level = level };
+                    entry = configurationEntry.GetGitConfigEntry();
                 }
                 catch (Exception ex)
                 {
@@ -220,7 +214,7 @@ namespace LibGit2Sharp
             
             private static int Set(IntPtr backend, string key, string value)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -239,7 +233,7 @@ namespace LibGit2Sharp
             
             private static int SetMultivar(IntPtr backend, string name, string regexp, string value)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -258,7 +252,7 @@ namespace LibGit2Sharp
             
             private static int Del(IntPtr backend, string key)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -277,7 +271,7 @@ namespace LibGit2Sharp
             
             private static int DelMultivar(IntPtr backend, string name, string regexp)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -296,19 +290,59 @@ namespace LibGit2Sharp
             
             private static int Iterator(out IntPtr iterator, IntPtr backend)
             {
-                // Impliment iterator
-                // https://github.com/libgit2/libgit2/blob/0d723f39decff4ff77def8a4acf3b7a656af59b2/include/git2/sys/config.h line 34
-                throw new NotImplementedException();
+                iterator = IntPtr.Zero;
+
+                var configBackend = MarshalConfigurationBackend(backend);
+                if (configBackend == null)
+                {
+                    return (int)GitErrorCode.Error;
+                }
+
+                try
+                {
+                    TConfigurationIterator configurationIterator;
+                    configBackend.Iterator(out configurationIterator);
+
+                    iterator = configurationIterator.GitConfigBackendPointer;
+                }
+                catch (Exception ex)
+                {
+                    Proxy.giterr_set_str(GitErrorCategory.Config, ex);
+                    return (int)GitErrorCode.Error;
+                }
+
+                return (int)GitErrorCode.Ok;
             }
             
             private static int Snapshot(out IntPtr snapshot, IntPtr backend)
             {
-                throw new NotImplementedException();
+                snapshot = IntPtr.Zero;
+
+                var configBackend = MarshalConfigurationBackend(backend);
+                if (configBackend == null)
+                {
+                    return (int)GitErrorCode.Error;
+                }
+
+                try
+                {
+                    ConfigurationBackend<TConfigurationValue, TConfigurationIterator> configurationBackend;
+                    configBackend.Snapshot(out configurationBackend);
+
+                    snapshot = configurationBackend.GitConfigBackendPointer;
+                }
+                catch (Exception ex)
+                {
+                    Proxy.giterr_set_str(GitErrorCategory.Config, ex);
+                    return (int)GitErrorCode.Error;
+                }
+
+                return (int)GitErrorCode.Ok;
             }
             
             private static int Lock(IntPtr backend)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -328,7 +362,7 @@ namespace LibGit2Sharp
             private static int Unlock(IntPtr backend, out int success)
             {
                 success = 0;
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return (int)GitErrorCode.Error;
@@ -357,7 +391,7 @@ namespace LibGit2Sharp
             
             private static void Free(IntPtr backend)
             {
-                ConfigBackend configBackend = MarshalConfigBackend(backend);
+                var configBackend = MarshalConfigurationBackend(backend);
                 if (configBackend == null)
                 {
                     return;

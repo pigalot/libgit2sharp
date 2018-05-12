@@ -21,6 +21,7 @@ namespace LibGit2Sharp
         private readonly FilePath systemConfigPath;
         private readonly FilePath programDataConfigPath;
 
+        private readonly RepositoryHandle repositoryHandle;
         private ConfigurationHandle configHandle;
 
         /// <summary>
@@ -31,15 +32,16 @@ namespace LibGit2Sharp
 
         internal Configuration(Repository repository, bool isInMemory)
         {
+            repositoryHandle = repository.Handle;
             if (isInMemory)
             {
                 configHandle = Proxy.git_config_new();
 
-                Proxy.git_repository_set_config(repository.Handle, configHandle);
+                Proxy.git_repository_set_config(repositoryHandle, configHandle);
             }
             else
             {
-                configHandle = Proxy.git_repository_config(repository.Handle);
+                configHandle = Proxy.git_repository_config(repositoryHandle);
             }
 
             repository.RegisterForCleanup(configHandle);
@@ -52,6 +54,7 @@ namespace LibGit2Sharp
             string xdgConfigurationFileLocation,
             string systemConfigurationFileLocation)
         {
+            repositoryHandle = repository.Handle;
             if (repositoryConfigurationFileLocation != null)
             {
                 repoConfigPath = NormalizeConfigPath(repositoryConfigurationFileLocation);
@@ -78,7 +81,7 @@ namespace LibGit2Sharp
                 string repoConfigLocation = Path.Combine(repository.Info.Path, "config");
                 Proxy.git_config_add_file_ondisk(configHandle, repoConfigLocation, ConfigurationLevel.Local);
 
-                Proxy.git_repository_set_config(repository.Handle, configHandle);
+                Proxy.git_repository_set_config(repositoryHandle, configHandle);
             }
             else if (repoConfigPath != null)
             {
@@ -133,6 +136,25 @@ namespace LibGit2Sharp
             }
 
             throw new FileNotFoundException("Cannot find repository configuration file", path.Native);
+        }
+
+        /// <summary>
+        /// Adds the provided backend to the config.
+        /// <para>
+        /// If the provided backend implements <see cref="IDisposable"/>, the <see cref="IDisposable.Dispose"/>
+        /// method will be honored and invoked upon the disposal of the repository.
+        /// </para>
+        /// </summary>
+        /// <typeparam name="TConfigurationValue"></typeparam>
+        /// <typeparam name="TConfigurationIterator"></typeparam>
+        /// <param name="backend"></param>
+        /// <param name="level"></param>
+        public virtual void AddBackend<TConfigurationValue, TConfigurationIterator>(ConfigurationBackend<TConfigurationValue, TConfigurationIterator> backend, ConfigurationLevel level)
+            where TConfigurationValue : class where TConfigurationIterator : ConfigurationIterator<TConfigurationValue>
+        {
+            Ensure.ArgumentNotNull(backend, "backend");
+
+            Proxy.git_config_add_backend(configHandle, backend.GitConfigBackendPointer, level, repositoryHandle);
         }
 
         /// <summary>
