@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace LibGit2Sharp
 {
@@ -37,5 +38,7 @@ namespace LibGit2Sharp
         /// </para>
         /// </summary>
         public Identity Identity { get; set; }
+
+        public Dictionary<ConfigurationLevel, ConfigurationBackend> ConfigurationBackends { get; set; }
     }
 }

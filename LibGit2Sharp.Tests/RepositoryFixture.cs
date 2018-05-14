@@ -337,7 +337,7 @@ namespace LibGit2Sharp.Tests
         public void OpeningRepositoryWithBadParamsThrows()
         {
             Assert.Throws<ArgumentException>(() => new Repository(string.Empty));
-            Assert.Throws<ArgumentNullException>(() => new Repository(null));
+            Assert.Throws<ArgumentNullException>(() => new Repository(path: null));
         }
 
         [Fact]

@@ -30,18 +30,26 @@ namespace LibGit2Sharp
         protected Configuration()
         { }
 
-        internal Configuration(Repository repository, bool isInMemory)
+        internal Configuration(Repository repository, bool isInMemory, Dictionary<ConfigurationLevel, ConfigurationBackend> configurationBackends)
         {
             repositoryHandle = repository.Handle;
             if (isInMemory)
             {
                 configHandle = Proxy.git_config_new();
-
+                
                 Proxy.git_repository_set_config(repositoryHandle, configHandle);
             }
             else
             {
                 configHandle = Proxy.git_repository_config(repositoryHandle);
+            }
+
+            if (configurationBackends != null)
+            {
+                foreach (var configurationBackend in configurationBackends)
+                {
+                    Proxy.git_config_add_backend(configHandle, configurationBackend.Value.GitConfigBackendPointer, configurationBackend.Key, repositoryHandle);
+                }
             }
 
             repository.RegisterForCleanup(configHandle);

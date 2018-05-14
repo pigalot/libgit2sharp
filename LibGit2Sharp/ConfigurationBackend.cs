@@ -5,8 +5,15 @@ using LibGit2Sharp.Core;
 
 namespace LibGit2Sharp
 {
-    public abstract class ConfigurationBackend<TConfigurationValue, TConfigurationIterator> where TConfigurationValue : class where TConfigurationIterator : ConfigurationIterator<TConfigurationValue>
+    public abstract class ConfigurationBackend
     {
+        internal abstract IntPtr GitConfigBackendPointer { get; }
+    }
+
+    public abstract class ConfigurationBackend<TConfigurationValue, TConfigurationIterator> : ConfigurationBackend where TConfigurationValue : class where TConfigurationIterator : ConfigurationIterator<TConfigurationValue>
+    {
+        protected bool isReadOnly;
+
         /// <summary>
         /// Invoked by libgit2 when this backend is no longer needed.
         /// </summary>
@@ -27,6 +34,11 @@ namespace LibGit2Sharp
         /// </summary>
         protected abstract ConfigBackendOperations SupportedOperations { get; }
 
+        /// <summary>
+        /// All implimentations must always impliment Open even if it just returns 0 as it is called in the c constructor.
+        /// </summary>
+        /// <param name="level"></param>
+        /// <returns></returns>
         public abstract int Open(ConfigurationLevel level);
 
         public abstract int Get(string key, out ConfigurationEntry<TConfigurationValue> configurationEntry);
@@ -49,7 +61,7 @@ namespace LibGit2Sharp
 
         private IntPtr nativeBackendPointer;
 
-        internal IntPtr GitConfigBackendPointer
+        internal override IntPtr GitConfigBackendPointer
         {
             get
             {
@@ -57,16 +69,15 @@ namespace LibGit2Sharp
                 {
                     var nativeBackend = new GitConfigBackend();
                     nativeBackend.Version = 1;
+                    nativeBackend.ReadOnly = this.isReadOnly ? 1 : 0;
 
                     // The "free" entry point is always provided.
                     nativeBackend.Free = BackendEntryPoints.FreeCallback;
 
-                    var supportedOperations = this.SupportedOperations;
+                    // The "open" entry point must always be provided.
+                    nativeBackend.Open = BackendEntryPoints.OpenCallback;
 
-                    if ((supportedOperations & ConfigBackendOperations.Open) != 0)
-                    {
-                        nativeBackend.Open = BackendEntryPoints.OpenCallback;
-                    }
+                    var supportedOperations = this.SupportedOperations;
 
                     if ((supportedOperations & ConfigBackendOperations.Get) != 0)
                     {
@@ -400,6 +411,12 @@ namespace LibGit2Sharp
                 try
                 {
                     configBackend.Free();
+
+                    var disposable = configBackend as IDisposable;
+                    if (disposable != null)
+                    {
+                        disposable.Dispose();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -468,6 +485,32 @@ namespace LibGit2Sharp
             /// This ConfigBackend declares that it supports the Free method.
             /// </summary>
             Free = 1024
+        }
+
+        /// <summary>
+        /// Libgit2 expected backend return codes.
+        /// </summary>
+        protected enum ReturnCode
+        {
+            /// <summary>
+            /// No error has occured.
+            /// </summary>
+            GIT_OK = 0,
+
+            /// <summary>
+            /// No object matching the oid, or short oid, can be found in the backend.
+            /// </summary>
+            GIT_ENOTFOUND = -3,
+
+            /// <summary>
+            /// The given short oid is ambiguous.
+            /// </summary>
+            GIT_EAMBIGUOUS = -5,
+
+            /// <summary>
+            /// Interruption of the foreach() callback is requested.
+            /// </summary>
+            GIT_EUSER = -7,
         }
     }
 }

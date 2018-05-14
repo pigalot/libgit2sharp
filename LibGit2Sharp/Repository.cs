@@ -57,6 +57,11 @@ namespace LibGit2Sharp
         {
         }
 
+        public Repository(RepositoryOptions options)
+            : this(null, options, RepositoryRequiredParameter.None)
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Repository"/> class.
         /// <para>For a standard repository, <paramref name="path"/> should either point to the ".git" folder or to the working directory. For a bare repository, <paramref name="path"/> should directly point to the repository folder.</para>
@@ -168,7 +173,7 @@ namespace LibGit2Sharp
                 tags = new TagCollection(this);
                 stashes = new StashCollection(this);
                 info = new Lazy<RepositoryInformation>(() => new RepositoryInformation(this, isBare));
-                config = new Lazy<Configuration>(() => RegisterForCleanup(new Configuration(this, isInMemory)));
+                config = new Lazy<Configuration>(() => RegisterForCleanup(new Configuration(this, isInMemory, options?.ConfigurationBackends)));
                 odb = new Lazy<ObjectDatabase>(() => new ObjectDatabase(this, isInMemory));
 
                 diff = new Diff(this);
